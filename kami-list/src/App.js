@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { AiOutlinePlus } from 'react-icons/ai';
-import Todo from './Todo';
+import React, { useState, useEffect } from "react";
+import { AiOutlinePlus } from "react-icons/ai";
+import Todo from "./Todo";
+import { db } from "./firebase";
+import {query , collection, onSnapshot, QuerySnapshot} from "firebase/firestore"
 
 const style = {
   bg: `h-screen w-screen p-4 bg-gradient-to-r from-[#F2A7CA] to-[#F2CED5]`,
@@ -13,24 +15,43 @@ const style = {
 };
 
 function App() {
-  const [todos, setTodos] = useState(["Tome banho, já faz uma semana"]);
+  const [todos, setTodos] = useState([
+    "Tome banho, já faz uma semana",
+    "Fedida demais ",
+  ]);
+
+  //create todos
+  //read todo from firebase
+  useEffect(() => {
+    const q = query(collection(db, "todos"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      let todosArr = []
+    })
+  }, []);
+
+  //update todo in firebase
+  //delete todo
 
   return (
     <div className={style.bg}>
       <div className={style.container}>
         <h3 className={style.heading}>Kamy List </h3>
         <form className={style.form}>
-          <input className={style.input} type="text" placeholder="Add Todo" />
+          <input
+            className={style.input}
+            type="text"
+            placeholder="Adcionar Tarefa"
+          />
           <button className={style.button}>
             <AiOutlinePlus size={30} />
           </button>
         </form>
         <ul>
-          {todos.map((todo, index) => {
+          {todos.map((todo, index) => (
             <Todo key={index} todo={todo} />
-          })}
+          ))}
         </ul>
-        <p className={style.count}>You have 2 todos</p>
+        <p className={style.count}>Você tem 2 tarefas</p>
       </div>
     </div>
   );
