@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { AiOutlinePlus } from "react-icons/ai";
-import Todo from "./Todo";
-import { db } from "./firebase";
-import {query , collection, onSnapshot, QuerySnapshot} from "firebase/firestore"
+import React, { useState, useEffect } from 'react';
+import { AiOutlinePlus } from 'react-icons/ai';
+import Todo from './Todo';
+import { db } from './firebase';
+import {
+  query,
+  collection,
+  onSnapshot,
+  updateDoc,
+  doc,
+  addDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 
 const style = {
-  bg: `h-screen w-screen p-4 bg-gradient-to-r from-[#F2A7CA] to-[#F2CED5]`,
+  bg: `h-screen w-screen p-4 bg-gradient-to-r from-[#F28D9F] to-[#F2D0D0]`,
   container: `bg-slate-100 max-w-[500px] w-full m-auto rounded-md shadow-xl p-4`,
   heading: `text-3xl font-bold text-center text-gray-800 p-2`,
   form: `flex justify-between`,
@@ -15,32 +23,59 @@ const style = {
 };
 
 function App() {
-  const [todos, setTodos] = useState([
-    "Tome banho, já faz uma semana",
-    "Fedida demais ",
-  ]);
+  const [todos, setTodos] = useState([]);
+  const [input, setInput] = useState('');
 
-  //create todos
-  //read todo from firebase
+  // Create todo
+  const createTodo = async (e) => {
+    e.preventDefault(e);
+    if (input === '') {
+      alert('Coloque uma tarefa valida');
+      return;
+    }
+    await addDoc(collection(db, 'todos'), {
+      text: input,
+      completed: false,
+    });
+    setInput('');
+  };
+
+  // Read todo from firebase
   useEffect(() => {
-    const q = query(collection(db, "todos"));
+    const q = query(collection(db, 'todos'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      let todosArr = []
-    })
+      let todosArr = [];
+      querySnapshot.forEach((doc) => {
+        todosArr.push({ ...doc.data(), id: doc.id });
+      });
+      setTodos(todosArr);
+    });
+    return () => unsubscribe();
   }, []);
 
-  //update todo in firebase
-  //delete todo
+  // Update todo in firebase
+  const toggleComplete = async (todo) => {
+    await updateDoc(doc(db, 'todos', todo.id), {
+      completed: !todo.completed,
+    });
+  };
+
+  // Delete todo
+  const deleteTodo = async (id) => {
+    await deleteDoc(doc(db, 'todos', id));
+  };
 
   return (
     <div className={style.bg}>
       <div className={style.container}>
-        <h3 className={style.heading}>Kamy List </h3>
-        <form className={style.form}>
+        <h3 className={style.heading}>Kamy List</h3>
+        <form onSubmit={createTodo} className={style.form}>
           <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             className={style.input}
-            type="text"
-            placeholder="Adcionar Tarefa"
+            type='text'
+            placeholder='Adicione sua tarefa'
           />
           <button className={style.button}>
             <AiOutlinePlus size={30} />
@@ -48,10 +83,17 @@ function App() {
         </form>
         <ul>
           {todos.map((todo, index) => (
-            <Todo key={index} todo={todo} />
+            <Todo
+              key={index}
+              todo={todo}
+              toggleComplete={toggleComplete}
+              deleteTodo={deleteTodo}
+            />
           ))}
         </ul>
-        <p className={style.count}>Você tem 2 tarefas</p>
+        {todos.length < 1 ? null : (
+          <p className={style.count}>{`Tarefas restantes ${todos.length}`}</p>
+        )}
       </div>
     </div>
   );
